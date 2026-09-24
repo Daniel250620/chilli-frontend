@@ -1,16 +1,15 @@
 import { paginateResource } from "@/lib/paginate";
 import { ResourceTable } from "@/components/resource-table";
-import { PageHeader, ListError } from "@/components/page-header";
 import type { Column, Field } from "@/lib/resources";
 
 const STATUS_OPTIONS = ["draft", "sending", "issued", "error", "cancelled"] as const;
 
 const columns: Column[] = [
-  { key: "rfcSnapshot", label: "RFC" },
-  { key: "businessNameSnapshot", label: "Razón social" },
-  { key: "cfdiUse", label: "Uso CFDI" },
+  { key: "rfcSnapshot", label: "RFC", sortable: true },
+  { key: "businessNameSnapshot", label: "Razón social", sortable: true },
+  { key: "cfdiUse", label: "Uso CFDI", sortable: true },
   { key: "status", label: "Estatus" },
-  { key: "fiscalUuid", label: "UUID fiscal" },
+  { key: "fiscalUuid", label: "UUID fiscal", sortable: true },
 ];
 
 const fields: Field[] = [
@@ -32,28 +31,36 @@ const fields: Field[] = [
 export default async function InvoicePage({
   searchParams,
 }: {
-  searchParams: Promise<{ offset?: string }>;
+  searchParams: Promise<{ offset?: string; search?: string; sort?: string; order?: string }>;
 }) {
-  const { offset: offsetParam } = await searchParams;
+  const { offset: offsetParam, search, sort, order } = await searchParams;
   const offset = Number(offsetParam ?? 0);
-  const { records, total, limit, error } = await paginateResource("invoice", offset);
+  const { records, total, limit, error } = await paginateResource(
+    "invoice",
+    offset,
+    search,
+    sort,
+    order,
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-      <PageHeader title="Facturas" accent="al momento" description="Del ticket al CFDI: RFC, régimen, uso y UUID fiscal." total={error ? undefined : total} />
-      {error ? (
-        <ListError message={error} />
-      ) : (
-        <ResourceTable
-          resource="invoice"
-          records={records}
-          total={total}
-          offset={offset}
-          limit={limit}
-          columns={columns}
-          fields={fields}
-        />
-      )}
+      <ResourceTable
+        resource="invoice"
+        records={records}
+        total={total}
+        offset={offset}
+        limit={limit}
+        columns={columns}
+        fields={fields}
+        title="Facturas"
+        accent="al momento"
+        description="Del ticket al CFDI: RFC, régimen, uso y UUID fiscal."
+        error={error}
+        search={search}
+        sort={sort}
+        order={order}
+      />
     </div>
   );
 }

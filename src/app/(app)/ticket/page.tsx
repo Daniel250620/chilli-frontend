@@ -1,16 +1,17 @@
 import { paginateResource } from "@/lib/paginate";
 import { ResourceTable } from "@/components/resource-table";
-import { PageHeader, ListError } from "@/components/page-header";
+import { getSession } from "@/lib/session";
 import type { Column, Field } from "@/lib/resources";
+import { BranchFilter } from "./branch-filter";
 
 const STATUS_OPTIONS = ["validated", "billable", "invoiced", "rejected"] as const;
 
 const columns: Column[] = [
-  { key: "externalTicketId", label: "Ticket" },
-  { key: "customer.normalizedPhone", label: "Cliente" },
-  { key: "branch.name", label: "Sucursal" },
-  { key: "ticketDate", label: "Fecha" },
-  { key: "total", label: "Total" },
+  { key: "externalTicketId", label: "Ticket", sortable: true },
+  { key: "customer.normalizedPhone", label: "Cliente", sortable: true },
+  { key: "branch.name", label: "Sucursal", sortable: true },
+  { key: "ticketDate", label: "Fecha", sortable: true },
+  { key: "total", label: "Total", sortable: true },
   { key: "status", label: "Estatus" },
 ];
 
@@ -28,28 +29,63 @@ const fields: Field[] = [
 export default async function TicketPage({
   searchParams,
 }: {
-  searchParams: Promise<{ offset?: string }>;
+  searchParams: Promise<{
+    offset?: string;
+    search?: string;
+    sort?: string;
+    order?: string;
+    branchId?: string;
+  }>;
 }) {
-  const { offset: offsetParam } = await searchParams;
+  const { offset: offsetParam, search, sort, order, branchId } = await searchParams;
   const offset = Number(offsetParam ?? 0);
-  const { records, total, limit, error } = await paginateResource("ticket", offset);
+  const { records, total, limit, error } = await paginateResource(
+    "ticket",
+    offset,
+    search,
+    sort,
+    order,
+    branchId ? { branchId } : undefined,
+  );
+
+  // ponytail: chequeo de rol inline, primer caso de UI condicionada por rol.
+  // Mover a un helper compartido (isAdmin()/can()) cuando exista la matriz de permisos.
+  const session = await getSession();
+  const isAdmin = session?.user.rol === "Administrador";
+  const branches = isAdmin
+    ? (
+        await paginateResource("branch", 0, undefined, undefined, undefined, { limit: "100" })
+      ).records
+    : [];
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-      <PageHeader title="Tickets" accent="del POS" description="Lo que salió en caja: validados, facturables y facturados." total={error ? undefined : total} />
-      {error ? (
-        <ListError message={error} />
-      ) : (
-        <ResourceTable
-          resource="ticket"
-          records={records}
-          total={total}
-          offset={offset}
-          limit={limit}
-          columns={columns}
-          fields={fields}
+      {isAdmin && (
+        <BranchFilter
+          branches={branches.map((b) => ({ id: String(b.id), name: String(b.name) }))}
+          branchId={branchId}
+          search={search}
+          sort={sort}
+          order={order}
         />
       )}
+      <ResourceTable
+        resource="ticket"
+        records={records}
+        total={total}
+        offset={offset}
+        limit={limit}
+        columns={columns}
+        fields={fields}
+        title="Tickets"
+        accent="del POS"
+        description="Lo que salió en caja: validados, facturables y facturados."
+        error={error}
+        search={search}
+        sort={sort}
+        order={order}
+        extraParams={branchId ? { branchId } : undefined}
+      />
     </div>
   );
 }

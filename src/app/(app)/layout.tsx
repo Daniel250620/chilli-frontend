@@ -41,8 +41,15 @@ export default async function AppLayout({
               priority
               className="h-auto w-[180px] drop-shadow-[1.5px_1.5px_0_#000]"
             />
-            <span className="mt-1 block text-[11px] font-extrabold tracking-[0.18em] text-nota uppercase">
-              Admin de la fonda
+            <span className="mt-2 block truncate text-sm font-bold text-nota">
+              {[session.user.name, session.user.lastName]
+                .filter(Boolean)
+                .join(" ") || session.user.email}
+            </span>
+            <span className="block text-[11px] font-extrabold tracking-[0.18em] text-nota uppercase">
+              {[session.user.rol, session.user.branch?.name]
+                .filter(Boolean)
+                .join(" ") || "Admin de la fonda"}
             </span>
           </Link>
         </div>

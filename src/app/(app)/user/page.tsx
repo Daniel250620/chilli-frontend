@@ -1,15 +1,14 @@
 import { paginateResource } from "@/lib/paginate";
 import { ResourceTable } from "@/components/resource-table";
-import { PageHeader, ListError } from "@/components/page-header";
 import type { Column, Field } from "@/lib/resources";
 
 const columns: Column[] = [
-  { key: "name", label: "Nombre" },
-  { key: "lastName", label: "Apellido" },
-  { key: "email", label: "Email" },
-  { key: "phone", label: "Teléfono" },
-  { key: "rol.name", label: "Rol" },
-  { key: "branch.name", label: "Sucursal" },
+  { key: "name", label: "Nombre", sortable: true },
+  { key: "lastName", label: "Apellido", sortable: true },
+  { key: "email", label: "Email", sortable: true },
+  { key: "phone", label: "Teléfono", sortable: true },
+  { key: "rol.name", label: "Rol", sortable: true },
+  { key: "branch.name", label: "Sucursal", sortable: true },
   { key: "status", label: "Activo" },
 ];
 
@@ -40,36 +39,36 @@ const fields: Field[] = [
 export default async function UserPage({
   searchParams,
 }: {
-  searchParams: Promise<{ offset?: string }>;
+  searchParams: Promise<{ offset?: string; search?: string; sort?: string; order?: string }>;
 }) {
-  const { offset: offsetParam } = await searchParams;
+  const { offset: offsetParam, search, sort, order } = await searchParams;
   const offset = Number(offsetParam ?? 0);
   const { records, total, limit, error } = await paginateResource(
     "user",
     offset,
+    search,
+    sort,
+    order,
   );
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-      <PageHeader
+      <ResourceTable
+        resource="user"
+        records={records}
+        total={total}
+        offset={offset}
+        limit={limit}
+        columns={columns}
+        fields={fields}
         title="Usuarios"
         accent="de la casa"
         description="Marchantitx, quien atiende la fonda: roles, sucursales y accesos."
-        total={error ? undefined : total}
+        error={error}
+        search={search}
+        sort={sort}
+        order={order}
       />
-      {error ? (
-        <ListError message={error} />
-      ) : (
-        <ResourceTable
-          resource="user"
-          records={records}
-          total={total}
-          offset={offset}
-          limit={limit}
-          columns={columns}
-          fields={fields}
-        />
-      )}
     </div>
   );
 }

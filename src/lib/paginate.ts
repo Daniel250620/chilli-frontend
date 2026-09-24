@@ -9,10 +9,21 @@ import { errorMessage, type Resource } from "@/lib/resources";
 
 const LIMIT = 10;
 
-export async function paginateResource(resource: Resource, offset: number) {
+export async function paginateResource(
+  resource: Resource,
+  offset: number,
+  search?: string,
+  sort?: string,
+  order?: string,
+  extra?: Record<string, string>,
+) {
+  const params: Record<string, unknown> = { limit: LIMIT, offset, ...extra };
+  if (search) params.search = search;
+  if (sort) params.sort = sort;
+  if (sort && order) params.order = order;
   try {
     const { data } = await httpClient.get(`/${resource}/paginate`, {
-      params: { limit: LIMIT, offset },
+      params,
       headers: await authHeaders(),
     });
     return {

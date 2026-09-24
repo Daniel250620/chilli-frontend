@@ -1,14 +1,13 @@
 import { paginateResource } from "@/lib/paginate";
 import { ResourceTable } from "@/components/resource-table";
-import { PageHeader, ListError } from "@/components/page-header";
 import type { Column, Field } from "@/lib/resources";
 
 const columns: Column[] = [
-  { key: "rfc", label: "RFC" },
-  { key: "socialReason", label: "Razón social" },
-  { key: "postalCode", label: "CP" },
-  { key: "customer.normalizedPhone", label: "Cliente" },
-  { key: "isPreferred", label: "Preferida" },
+  { key: "rfc", label: "RFC", sortable: true },
+  { key: "socialReason", label: "Razón social", sortable: true },
+  { key: "postalCode", label: "CP", sortable: true },
+  { key: "customer.normalizedPhone", label: "Cliente", sortable: true },
+  { key: "isPreferred", label: "Preferida", sortable: true },
 ];
 
 const fields: Field[] = [
@@ -33,28 +32,36 @@ const fields: Field[] = [
 export default async function CsfPage({
   searchParams,
 }: {
-  searchParams: Promise<{ offset?: string }>;
+  searchParams: Promise<{ offset?: string; search?: string; sort?: string; order?: string }>;
 }) {
-  const { offset: offsetParam } = await searchParams;
+  const { offset: offsetParam, search, sort, order } = await searchParams;
   const offset = Number(offsetParam ?? 0);
-  const { records, total, limit, error } = await paginateResource("csf", offset);
+  const { records, total, limit, error } = await paginateResource(
+    "csf",
+    offset,
+    search,
+    sort,
+    order,
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-      <PageHeader title="CSF" accent="fiscal" description="Constancias parseadas: RFC, razón social y confianza de extracción." total={error ? undefined : total} />
-      {error ? (
-        <ListError message={error} />
-      ) : (
-        <ResourceTable
-          resource="csf"
-          records={records}
-          total={total}
-          offset={offset}
-          limit={limit}
-          columns={columns}
-          fields={fields}
-        />
-      )}
+      <ResourceTable
+        resource="csf"
+        records={records}
+        total={total}
+        offset={offset}
+        limit={limit}
+        columns={columns}
+        fields={fields}
+        title="CSF"
+        accent="fiscal"
+        description="Constancias parseadas: RFC, razón social y confianza de extracción."
+        error={error}
+        search={search}
+        sort={sort}
+        order={order}
+      />
     </div>
   );
 }

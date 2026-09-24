@@ -1,11 +1,27 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { saveRecord, deleteRecord, type ActionState } from "@/lib/actions/resource";
 import { get, type Resource, type Column, type Field } from "@/lib/resources";
+import { PageHeader, ListError } from "@/components/page-header";
 
 const initialState: ActionState = {};
+
+type SaveState = ActionState & { ok?: boolean };
+
+const initialSaveState: SaveState = {};
+
+async function saveAndMark(
+  resource: Resource,
+  id: string | null,
+  fields: readonly Field[],
+  prevState: ActionState,
+  formData: FormData,
+): Promise<SaveState> {
+  const result = await saveRecord(resource, id, fields, prevState, formData);
+  return result.error ? result : { ok: true };
+}
 
 function toLocalDatetimeInput(iso: string): string {
   const d = new Date(iso);
@@ -108,21 +124,28 @@ function RecordForm({
   fields,
   editingId,
   record,
-  onCancel,
+  onSaved,
+  onClose,
 }: {
   resource: Resource;
   fields: readonly Field[];
   editingId: string | null;
   record: Record<string, unknown> | null;
-  onCancel: () => void;
+  onSaved: () => void;
+  onClose: () => void;
 }) {
   const [state, formAction, pending] = useActionState(
-    saveRecord.bind(null, resource, editingId, fields),
-    initialState,
+    saveAndMark.bind(null, resource, editingId, fields),
+    initialSaveState,
   );
 
+  useEffect(() => {
+    if (state?.ok) onSaved();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
+
   return (
-    <form key={editingId ?? "new"} action={formAction} className="elevacion rounded-2xl border border-carbon/10 bg-tiza p-5 sm:p-6">
+    <form action={formAction} className="p-5 sm:p-6">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-sm font-extrabold tracking-wider uppercase">
           {editingId ? (
@@ -131,11 +154,14 @@ function RecordForm({
             <>Nuevo <span className="font-marker text-guajillo normal-case">marchantitx</span></>
           )}
         </h2>
-        {editingId && (
-          <span className="rounded-full border border-mostaza-claro bg-mostaza-tinta px-2.5 py-1 text-[11px] font-bold text-nota">
-            Editando…
-          </span>
-        )}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar"
+          className="rounded-lg px-2 py-1 text-lg leading-none font-extrabold text-carbon/50 transition hover:bg-carbon/5 hover:text-carbon"
+        >
+          ×
+        </button>
       </div>
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {fields.map((field) => (
@@ -151,15 +177,13 @@ function RecordForm({
         >
           {pending ? "Guardando..." : "Guardar"}
         </button>
-        {editingId && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-xl border-2 border-carbon/20 bg-white px-5 py-2.5 text-xs font-extrabold tracking-wider text-carbon uppercase transition duration-150 hover:border-carbon/50"
-          >
-            Cancelar edición
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-xl border-2 border-carbon/20 bg-white px-5 py-2.5 text-xs font-extrabold tracking-wider text-carbon uppercase transition duration-150 hover:border-carbon/50"
+        >
+          Cancelar
+        </button>
       </div>
     </form>
   );
@@ -190,6 +214,50 @@ function DeleteButton({ resource, id }: { resource: Resource; id: string }) {
   );
 }
 
+function baseParams(
+  search?: string,
+  sort?: string,
+  order?: string,
+  extraParams?: Record<string, string>,
+): URLSearchParams {
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  if (sort) params.set("sort", sort);
+  if (sort && order) params.set("order", order);
+  for (const [key, value] of Object.entries(extraParams ?? {})) {
+    if (value) params.set(key, value);
+  }
+  return params;
+}
+
+function pageHref(
+  offset: number,
+  search?: string,
+  sort?: string,
+  order?: string,
+  extraParams?: Record<string, string>,
+): string {
+  const params = baseParams(search, sort, order, extraParams);
+  if (offset > 0) params.set("offset", String(offset));
+  const qs = params.toString();
+  return qs ? `?${qs}` : "?";
+}
+
+// Toggle: click col sin orden activo -> asc; click de nuevo -> desc; click otra
+// columna -> asc. offset siempre se resetea.
+function sortHref(
+  col: Column,
+  currentSort?: string,
+  currentOrder?: string,
+  search?: string,
+  extraParams?: Record<string, string>,
+): string {
+  const nextOrder = col.key === currentSort && currentOrder === "asc" ? "desc" : "asc";
+  const params = baseParams(search, col.key, nextOrder, extraParams);
+  const qs = params.toString();
+  return qs ? `?${qs}` : "?";
+}
+
 export function ResourceTable({
   resource,
   records,
@@ -198,6 +266,14 @@ export function ResourceTable({
   limit,
   columns,
   fields,
+  title,
+  accent,
+  description,
+  error,
+  search,
+  sort,
+  order,
+  extraParams,
 }: {
   resource: Resource;
   records: Record<string, unknown>[];
@@ -206,107 +282,202 @@ export function ResourceTable({
   limit: number;
   columns: readonly Column[];
   fields: readonly Field[];
+  title: string;
+  accent: string;
+  description: string;
+  error?: string;
+  search?: string;
+  sort?: string;
+  order?: string;
+  extraParams?: Record<string, string>;
 }) {
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const editingRecord = records.find((r) => r.id === editingId) ?? null;
+  const [mode, setMode] = useState<null | "new" | string>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const editingId = mode && mode !== "new" ? mode : null;
+  const editingRecord = records.find((r) => String(r.id) === editingId) ?? null;
   const from = total === 0 ? 0 : offset + 1;
   const to = Math.min(offset + limit, total);
 
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (mode !== null && !dialog.open) dialog.showModal();
+    if (mode === null && dialog.open) dialog.close();
+  }, [mode]);
+
   return (
     <div className="flex flex-col gap-5">
-      <div className="elevacion overflow-hidden rounded-2xl border border-carbon/10 bg-tiza">
-        {records.length === 0 ? (
-          <div className="flex flex-col items-center px-6 py-12 text-center">
-            <p className="font-marker text-2xl text-guajillo">Nada por aquí…</p>
-            <p className="mt-2 max-w-sm text-sm font-medium text-carbon/60">
-              Marchantitx, aún no hay registros. Usa el formulario de abajo para dar de alta el primero.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
-              <thead>
-                <tr className="bg-carbon text-white">
-                  {columns.map((col) => (
-                    <th key={col.key} scope="col" className="px-4 py-3 text-[11px] font-extrabold tracking-wider whitespace-nowrap uppercase">
-                      {col.label}
-                    </th>
-                  ))}
-                  <th className="px-4 py-3 text-[11px] font-extrabold tracking-wider uppercase">
-                    <span className="sr-only">Acciones</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {records.map((record, i) => (
-                  <tr
-                    key={String(record.id)}
-                    className={`border-b border-carbon/8 transition last:border-0 hover:bg-mostaza-tinta/60 ${editingId === String(record.id) ? "bg-mostaza-tinta" : i % 2 === 1 ? "bg-carbon/[0.02]" : "bg-white"}`}
-                  >
-                    {columns.map((col) => (
-                      <td key={col.key} className="max-w-56 truncate px-4 py-3 align-middle" title={String(get(record, col.key) ?? "")}>
-                        <CellValue value={get(record, col.key)} />
-                      </td>
-                    ))}
-                    <td className="px-4 py-2 align-middle whitespace-nowrap">
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setEditingId(String(record.id))}
-                          className="rounded-lg px-2.5 py-1 text-xs font-extrabold tracking-wide text-pizarra-oscuro uppercase transition hover:bg-pizarra/15"
-                        >
-                          Editar
-                        </button>
-                        <DeleteButton resource={resource} id={String(record.id)} />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs font-bold tracking-wide text-carbon/55 uppercase">
-          {total === 0 ? "0 registros" : `${from}–${to} de ${total}`}
-        </p>
-        <div className="flex gap-2">
-          {offset > 0 ? (
-            <Link
-              href={`?offset=${Math.max(0, offset - limit)}`}
-              className="rounded-xl border-2 border-carbon/20 bg-white px-4 py-2 text-xs font-extrabold tracking-wider uppercase transition hover:border-carbon/60"
-            >
-              ← Anterior
-            </Link>
-          ) : (
-            <span aria-disabled className="rounded-xl border-2 border-carbon/10 bg-white/60 px-4 py-2 text-xs font-extrabold tracking-wider text-carbon/30 uppercase">
-              ← Anterior
-            </span>
-          )}
-          {offset + limit < total ? (
-            <Link
-              href={`?offset=${offset + limit}`}
-              className="rounded-xl border-2 border-black bg-mostaza px-4 py-2 text-xs font-extrabold tracking-wider text-nota uppercase shadow-[3px_3px_0_0_#000] transition duration-150 hover:-translate-y-0.5"
-            >
-              Siguiente →
-            </Link>
-          ) : (
-            <span aria-disabled className="rounded-xl border-2 border-carbon/10 bg-white/60 px-4 py-2 text-xs font-extrabold tracking-wider text-carbon/30 uppercase">
-              Siguiente →
-            </span>
-          )}
-        </div>
-      </div>
-
-      <RecordForm
-        resource={resource}
-        fields={fields}
-        editingId={editingId}
-        record={editingRecord}
-        onCancel={() => setEditingId(null)}
+      <PageHeader
+        title={title}
+        accent={accent}
+        description={description}
+        action={
+          <button
+            type="button"
+            onClick={() => setMode("new")}
+            className="rounded-xl border-2 border-black bg-mostaza px-4 py-2 text-xs font-extrabold tracking-wider text-nota uppercase shadow-[3px_3px_0_0_#000] transition duration-150 hover:-translate-y-0.5"
+          >
+            + Crear
+          </button>
+        }
       />
+
+      <form
+        method="get"
+        onSubmit={(e) => {
+          const input = e.currentTarget.elements.namedItem("search") as HTMLInputElement | null;
+          if (input && !input.value.trim()) input.removeAttribute("name");
+        }}
+        className="flex gap-2"
+      >
+        {sort && <input type="hidden" name="sort" value={sort} />}
+        {sort && order && <input type="hidden" name="order" value={order} />}
+        {Object.entries(extraParams ?? {}).map(
+          ([key, value]) => value && <input key={key} type="hidden" name={key} value={value} />,
+        )}
+        <input
+          type="search"
+          name="search"
+          defaultValue={search}
+          placeholder="Buscar…"
+          className="max-w-sm"
+        />
+        <button
+          type="submit"
+          className="rounded-xl border-2 border-carbon/20 bg-white px-4 py-2 text-xs font-extrabold tracking-wider uppercase transition hover:border-carbon/60"
+        >
+          Buscar
+        </button>
+      </form>
+
+      {error ? (
+        <ListError message={error} />
+      ) : (
+        <>
+          <div className="elevacion overflow-hidden rounded-2xl border border-carbon/10 bg-tiza">
+            {records.length === 0 ? (
+              <div className="flex flex-col items-center px-6 py-12 text-center">
+                <p className="font-marker text-2xl text-guajillo">Nada por aquí…</p>
+                <p className="mt-2 max-w-sm text-sm font-medium text-carbon/60">
+                  Marchantitx, aún no hay registros. Usa el botón Crear para dar de alta el primero.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="bg-carbon text-white">
+                      {columns.map((col) => {
+                        const active = col.sortable && col.key === sort;
+                        const ariaSort = active ? (order === "desc" ? "descending" : "ascending") : undefined;
+                        return (
+                          <th
+                            key={col.key}
+                            scope="col"
+                            aria-sort={ariaSort}
+                            className="px-4 py-3 text-[11px] font-extrabold tracking-wider whitespace-nowrap uppercase"
+                          >
+                            {col.sortable ? (
+                              <Link
+                                href={sortHref(col, sort, order, search, extraParams)}
+                                className="inline-flex items-center gap-1 hover:underline"
+                              >
+                                {col.label}
+                                {active && <span aria-hidden>{order === "desc" ? "▼" : "▲"}</span>}
+                              </Link>
+                            ) : (
+                              col.label
+                            )}
+                          </th>
+                        );
+                      })}
+                      <th className="px-4 py-3 text-[11px] font-extrabold tracking-wider uppercase">
+                        <span className="sr-only">Acciones</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {records.map((record, i) => (
+                      <tr
+                        key={String(record.id)}
+                        className={`border-b border-carbon/8 transition last:border-0 hover:bg-mostaza-tinta/60 ${editingId === String(record.id) ? "bg-mostaza-tinta" : i % 2 === 1 ? "bg-carbon/[0.02]" : "bg-white"}`}
+                      >
+                        {columns.map((col) => (
+                          <td key={col.key} className="max-w-56 truncate px-4 py-3 align-middle" title={String(get(record, col.key) ?? "")}>
+                            <CellValue value={get(record, col.key)} />
+                          </td>
+                        ))}
+                        <td className="px-4 py-2 align-middle whitespace-nowrap">
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setMode(String(record.id))}
+                              className="rounded-lg px-2.5 py-1 text-xs font-extrabold tracking-wide text-pizarra-oscuro uppercase transition hover:bg-pizarra/15"
+                            >
+                              Editar
+                            </button>
+                            <DeleteButton resource={resource} id={String(record.id)} />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs font-bold tracking-wide text-carbon/55 uppercase">
+              {total === 0 ? "0 registros" : `${from}–${to} de ${total}`}
+            </p>
+            <div className="flex gap-2">
+              {offset > 0 ? (
+                <Link
+                  href={pageHref(Math.max(0, offset - limit), search, sort, order, extraParams)}
+                  className="rounded-xl border-2 border-carbon/20 bg-white px-4 py-2 text-xs font-extrabold tracking-wider uppercase transition hover:border-carbon/60"
+                >
+                  ← Anterior
+                </Link>
+              ) : (
+                <span aria-disabled className="rounded-xl border-2 border-carbon/10 bg-white/60 px-4 py-2 text-xs font-extrabold tracking-wider text-carbon/30 uppercase">
+                  ← Anterior
+                </span>
+              )}
+              {offset + limit < total ? (
+                <Link
+                  href={pageHref(offset + limit, search, sort, order, extraParams)}
+                  className="rounded-xl border-2 border-black bg-mostaza px-4 py-2 text-xs font-extrabold tracking-wider text-nota uppercase shadow-[3px_3px_0_0_#000] transition duration-150 hover:-translate-y-0.5"
+                >
+                  Siguiente →
+                </Link>
+              ) : (
+                <span aria-disabled className="rounded-xl border-2 border-carbon/10 bg-white/60 px-4 py-2 text-xs font-extrabold tracking-wider text-carbon/30 uppercase">
+                  Siguiente →
+                </span>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      <dialog
+        ref={dialogRef}
+        onClose={() => setMode(null)}
+        className="modal elevacion rounded-2xl border border-carbon/10 bg-tiza"
+      >
+        {mode !== null && (
+          <RecordForm
+            key={mode}
+            resource={resource}
+            fields={fields}
+            editingId={editingId}
+            record={editingRecord}
+            onSaved={() => setMode(null)}
+            onClose={() => dialogRef.current?.close()}
+          />
+        )}
+      </dialog>
     </div>
   );
 }

@@ -1,15 +1,14 @@
 import { paginateResource } from "@/lib/paginate";
 import { ResourceTable } from "@/components/resource-table";
-import { PageHeader, ListError } from "@/components/page-header";
 import type { Column, Field } from "@/lib/resources";
 
 const columns: Column[] = [
-  { key: "name", label: "Nombre" },
-  { key: "address", label: "Dirección" },
-  { key: "phone", label: "Teléfono" },
-  { key: "serie", label: "Serie" },
-  { key: "isActive", label: "Activa" },
-  { key: "hasDelivery", label: "Entrega" },
+  { key: "name", label: "Nombre", sortable: true },
+  { key: "address", label: "Dirección", sortable: true },
+  { key: "phone", label: "Teléfono", sortable: true },
+  { key: "serie", label: "Serie", sortable: true },
+  { key: "isActive", label: "Activa", sortable: true },
+  { key: "hasDelivery", label: "Entrega", sortable: true },
 ];
 
 const fields: Field[] = [
@@ -26,28 +25,36 @@ const fields: Field[] = [
 export default async function BranchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ offset?: string }>;
+  searchParams: Promise<{ offset?: string; search?: string; sort?: string; order?: string }>;
 }) {
-  const { offset: offsetParam } = await searchParams;
+  const { offset: offsetParam, search, sort, order } = await searchParams;
   const offset = Number(offsetParam ?? 0);
-  const { records, total, limit, error } = await paginateResource("branch", offset);
+  const { records, total, limit, error } = await paginateResource(
+    "branch",
+    offset,
+    search,
+    sort,
+    order,
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-      <PageHeader title="Sucursales" accent="de la fonda" description="Marchantitx, aquí están las fondas físicas: serie, entrega y ubicación." total={error ? undefined : total} />
-      {error ? (
-        <ListError message={error} />
-      ) : (
-        <ResourceTable
-          resource="branch"
-          records={records}
-          total={total}
-          offset={offset}
-          limit={limit}
-          columns={columns}
-          fields={fields}
-        />
-      )}
+      <ResourceTable
+        resource="branch"
+        records={records}
+        total={total}
+        offset={offset}
+        limit={limit}
+        columns={columns}
+        fields={fields}
+        title="Sucursales"
+        accent="de la fonda"
+        description="Marchantitx, aquí están las fondas físicas: serie, entrega y ubicación."
+        error={error}
+        search={search}
+        sort={sort}
+        order={order}
+      />
     </div>
   );
 }

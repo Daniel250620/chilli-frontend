@@ -14,7 +14,7 @@ export const RESOURCES = [
 
 export type Resource = (typeof RESOURCES)[number];
 
-export type Column = { key: string; label: string };
+export type Column = { key: string; label: string; sortable?: boolean };
 
 export type Field = {
   name: string;

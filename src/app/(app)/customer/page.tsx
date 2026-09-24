@@ -1,13 +1,12 @@
 import { paginateResource } from "@/lib/paginate";
 import { ResourceTable } from "@/components/resource-table";
-import { PageHeader, ListError } from "@/components/page-header";
 import type { Column, Field } from "@/lib/resources";
 
 const columns: Column[] = [
-  { key: "normalizedPhone", label: "Teléfono" },
-  { key: "name", label: "Nombre" },
-  { key: "email", label: "Email" },
-  { key: "preferredCsf.rfc", label: "CSF preferida" },
+  { key: "normalizedPhone", label: "Teléfono", sortable: true },
+  { key: "name", label: "Nombre", sortable: true },
+  { key: "email", label: "Email", sortable: true },
+  { key: "preferredCsf.rfc", label: "CSF preferida", sortable: true },
 ];
 
 const fields: Field[] = [
@@ -26,28 +25,36 @@ const fields: Field[] = [
 export default async function CustomerPage({
   searchParams,
 }: {
-  searchParams: Promise<{ offset?: string }>;
+  searchParams: Promise<{ offset?: string; search?: string; sort?: string; order?: string }>;
 }) {
-  const { offset: offsetParam } = await searchParams;
+  const { offset: offsetParam, search, sort, order } = await searchParams;
   const offset = Number(offsetParam ?? 0);
-  const { records, total, limit, error } = await paginateResource("customer", offset);
+  const { records, total, limit, error } = await paginateResource(
+    "customer",
+    offset,
+    search,
+    sort,
+    order,
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-      <PageHeader title="Clientes" accent="marchantitx" description="Registrados por teléfono. Da clic para ver el menú de cada uno." total={error ? undefined : total} />
-      {error ? (
-        <ListError message={error} />
-      ) : (
-        <ResourceTable
-          resource="customer"
-          records={records}
-          total={total}
-          offset={offset}
-          limit={limit}
-          columns={columns}
-          fields={fields}
-        />
-      )}
+      <ResourceTable
+        resource="customer"
+        records={records}
+        total={total}
+        offset={offset}
+        limit={limit}
+        columns={columns}
+        fields={fields}
+        title="Clientes"
+        accent="marchantitx"
+        description="Registrados por teléfono. Da clic para ver el menú de cada uno."
+        error={error}
+        search={search}
+        sort={sort}
+        order={order}
+      />
     </div>
   );
 }

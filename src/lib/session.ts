@@ -10,6 +10,8 @@ export interface SessionUser {
   name?: string | null;
   email: string;
   rol?: string | null;
+  lastName?: string | null;
+  branch?: { name: string } | null;
   [key: string]: unknown;
 }
 

@@ -1,13 +1,15 @@
+import type { ReactNode } from "react";
+
 export function PageHeader({
   title,
   accent,
   description,
-  total,
+  action,
 }: {
   title: string;
   accent: string;
   description: string;
-  total?: number;
+  action?: ReactNode;
 }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
@@ -18,11 +20,7 @@ export function PageHeader({
         </h1>
         <p className="mt-1 max-w-2xl text-sm font-medium text-carbon/60">{description}</p>
       </div>
-      {typeof total === "number" && (
-        <p className="rounded-full border border-carbon/15 bg-tiza px-3 py-1 text-xs font-extrabold tracking-wide text-carbon/70 uppercase">
-          <span className="tabular">{total}</span> registros
-        </p>
-      )}
+      {action}
     </div>
   );
 }
