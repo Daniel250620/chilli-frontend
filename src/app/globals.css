@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+@theme {
+  --color-mostaza: #ffbb1e;
+  --color-mostaza-claro: #ffcc4d;
+  --color-mostaza-tinta: #fff6e0;
+  --color-guajillo: #c1272d;
+  --color-guajillo-oscuro: #9c1e23;
+  --color-pizarra: #6b9ab7;
+  --color-pizarra-oscuro: #4f7a94;
+  --color-carbon: #212529;
+  --color-nota: #222222;
+  --color-tiza: #ffffff;
+  --color-crema: #fffbf1;
+
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
+  --font-marker: "Permanent Marker", "Montserrat", cursive;
+}
+
+body {
+  background: var(--color-crema);
+  color: var(--color-carbon);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01";
+}
+
+::selection {
+  background: var(--color-mostaza);
+  color: var(--color-nota);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-pizarra);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-guajillo) var(--color-mostaza-tinta);
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: var(--color-mostaza-tinta);
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-guajillo);
+  border-radius: 8px;
+  border: 2px solid var(--color-mostaza-tinta);
+}
+
+.font-marker {
+  font-family: var(--font-marker);
+}
+
+/* Fondo original de la fonda (mostaza + X + rombos) */
+.fondo-fonda {
+  background-color: var(--color-mostaza);
+  background-image: url("/fondo.jpg");
+  background-repeat: repeat;
+  background-size: auto;
+}
+
+.fondo-fonda-suave {
+  background-color: var(--color-crema);
+  background-image: radial-gradient(circle at 12px 12px, rgb(193 39 45 / 0.055) 2px, transparent 2.5px);
+  background-size: 28px 28px;
+}
+
+/* Sticker de marca: solo donde la marca lo pide (login, CTA primario) */
+.sticker {
+  transform: rotate(-1.5deg);
+  box-shadow: 5px 5px 0 0 #000;
+  border: 2px solid #000;
+}
+.sticker-azul {
+  transform: rotate(1.2deg);
+  box-shadow: 5px 5px 0 0 #000;
+  border: 2px solid #000;
+}
+
+/* Profundidad operativa: offset + blur suave (no disfraz neobrutalista) */
+.elevacion {
+  box-shadow:
+    0 1px 2px rgb(33 37 41 / 0.08),
+    0 8px 24px -12px rgb(33 37 41 / 0.25);
+}
+
+/* Controles base: vocabulario único en toda la app */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  width: 100%;
+  border: 1.5px solid rgb(33 37 41 / 0.28);
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--color-carbon);
+  transition:
+    border-color 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+input:not([type="checkbox"]):not([type="radio"])::placeholder,
+textarea::placeholder {
+  color: rgb(33 37 41 / 0.42);
+}
+input:not([type="checkbox"]):not([type="radio"]):hover,
+select:hover,
+textarea:hover {
+  border-color: rgb(33 37 41 / 0.5);
+}
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--color-guajillo);
+  box-shadow: 0 0 0 3px rgb(193 39 45 / 0.18);
+}
+input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--color-guajillo);
+}
+
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
