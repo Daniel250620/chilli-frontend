@@ -79,6 +79,7 @@ export default async function TicketPage({
         filters={
           isAdmin && (
             <BranchFilter
+              key={branchId ?? ""}
               branches={branches.map((b) => ({ id: String(b.id), name: String(b.name) }))}
               branchId={branchId}
               search={search}

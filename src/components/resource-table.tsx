@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { saveRecord, deleteRecord, searchOptions, type ActionState } from "@/lib/actions/resource";
 import { get, type Resource, type Column, type Field } from "@/lib/resources";
 import { PageHeader, ListError } from "@/components/page-header";
+import { CellValue, labelEs } from "@/components/cell-value";
 
 const initialState: ActionState = {};
 
@@ -40,30 +41,6 @@ function defaultValueFor(field: Field, record: Record<string, unknown> | null) {
   return String(value);
 }
 
-const ES_LABELS: Record<string, string> = {
-  validated: "Validado",
-  billable: "Facturable",
-  invoiced: "Facturado",
-  rejected: "Rechazado",
-  draft: "Borrador",
-  sending: "Enviando",
-  issued: "Emitida",
-  error: "Error",
-  cancelled: "Cancelada",
-  new: "Nuevo",
-  assigned: "Asignado",
-  in_progress: "En progreso",
-  resolved: "Resuelto",
-  closed: "Cerrado",
-  low: "Baja",
-  medium: "Media",
-  high: "Alta",
-  critical: "Crítica",
-  preferida: "Preferida",
-  activo: "Activo",
-  inactivo: "Inactivo",
-};
-
 const RESOURCE_SINGULAR: Record<Resource, string> = {
   user: "usuario",
   customer: "cliente",
@@ -73,42 +50,6 @@ const RESOURCE_SINGULAR: Record<Resource, string> = {
   csf: "CSF",
   case: "caso",
 };
-
-function labelEs(value: unknown): string {
-  const str = String(value ?? "");
-  return ES_LABELS[str.toLowerCase()] ?? str.replace(/_/g, " ");
-}
-
-function toneFor(value: unknown): string {
-  const v = String(value ?? "").toLowerCase();
-  if (["rejected", "error", "cancelled", "cancelado", "critical", "no", "false", "inactivo"].includes(v))
-    return "border-guajillo/30 bg-guajillo/10 text-guajillo";
-  if (["invoiced", "issued", "resolved", "closed", "sí", "si", "true", "activo", "preferida"].includes(v))
-    return "border-emerald-700/25 bg-emerald-50 text-emerald-800";
-  if (["billable", "sending", "in_progress", "assigned", "medium", "high", "validated", "new"].includes(v))
-    return "border-pizarra/40 bg-pizarra/15 text-pizarra-oscuro";
-  if (["draft", "low"].includes(v))
-    return "border-mostaza-claro bg-mostaza-tinta text-nota";
-  return "border-carbon/15 bg-carbon/5 text-carbon/70";
-}
-
-function CellValue({ value }: { value: unknown }) {
-  if (typeof value === "boolean")
-    return (
-      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold ${toneFor(value ? "sí" : "no")}`}>
-        {value ? "Sí" : "No"}
-      </span>
-    );
-  if (value == null || value === "") return <span className="text-carbon/30">—</span>;
-  const str = String(value);
-  if (/^(validated|billable|invoiced|rejected|draft|sending|issued|error|cancelled|new|assigned|in_progress|resolved|closed|low|medium|high|critical)$/i.test(str))
-    return (
-      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold whitespace-nowrap ${toneFor(str)}`}>
-        {labelEs(str)}
-      </span>
-    );
-  return <span className="tabular">{str}</span>;
-}
 
 // Autocomplete mínimo: input de texto + lista de resultados de
 // GET /{resource}/paginate?search=, debounced. El id elegido viaja en un
@@ -411,6 +352,7 @@ export function ResourceTable({
   order,
   extraParams,
   filters,
+  rowHref,
 }: {
   resource: Resource;
   records: Record<string, unknown>[];
@@ -428,6 +370,7 @@ export function ResourceTable({
   order?: string;
   extraParams?: Record<string, string>;
   filters?: React.ReactNode;
+  rowHref?: string;
 }) {
   const [mode, setMode] = useState<null | "new" | string>(null);
   const router = useRouter();
@@ -545,7 +488,9 @@ export function ResourceTable({
                                 className="inline-flex items-center gap-1 hover:underline"
                               >
                                 {col.label}
-                                {active && <span aria-hidden>{order === "desc" ? "▼" : "▲"}</span>}
+                                <span aria-hidden className={active ? "" : "opacity-40"}>
+                                  {active && order === "desc" ? "▼" : "▲"}
+                                </span>
                               </Link>
                             ) : (
                               col.label
@@ -564,9 +509,15 @@ export function ResourceTable({
                         key={String(record.id)}
                         className={`border-b border-carbon/8 transition last:border-0 hover:bg-mostaza-tinta/60 ${editingId === String(record.id) ? "bg-mostaza-tinta" : i % 2 === 1 ? "bg-carbon/[0.02]" : "bg-white"}`}
                       >
-                        {columns.map((col) => (
+                        {columns.map((col, colIndex) => (
                           <td key={col.key} className="max-w-56 truncate px-4 py-3 align-middle" title={String(get(record, col.key) ?? "")}>
-                            <CellValue value={get(record, col.key)} />
+                            {colIndex === 0 && rowHref ? (
+                              <Link href={`${rowHref}/${String(record.id)}`} className="hover:underline">
+                                <CellValue value={get(record, col.key)} />
+                              </Link>
+                            ) : (
+                              <CellValue value={get(record, col.key)} />
+                            )}
                           </td>
                         ))}
                         <td className="px-4 py-2 align-middle whitespace-nowrap">

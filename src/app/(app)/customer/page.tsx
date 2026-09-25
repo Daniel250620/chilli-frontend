@@ -3,8 +3,8 @@ import { ResourceTable } from "@/components/resource-table";
 import type { Column, Field } from "@/lib/resources";
 
 const columns: Column[] = [
-  { key: "normalizedPhone", label: "Teléfono", sortable: true },
   { key: "name", label: "Nombre", sortable: true },
+  { key: "normalizedPhone", label: "Teléfono", sortable: true },
   { key: "email", label: "Email", sortable: true },
   { key: "preferredCsf.rfc", label: "CSF preferida", sortable: true },
 ];
@@ -49,11 +49,12 @@ export default async function CustomerPage({
         fields={fields}
         title="Clientes"
         accent="marchantitx"
-        description="Registrados por teléfono. Da clic para ver el menú de cada uno."
+        description="Registrados por teléfono. Da clic en el nombre para ver su actividad."
         error={error}
         search={search}
         sort={sort}
         order={order}
+        rowHref="/customer"
       />
     </div>
   );
