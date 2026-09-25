@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { saveRecord, deleteRecord, type ActionState } from "@/lib/actions/resource";
+import { saveRecord, deleteRecord, searchOptions, type ActionState } from "@/lib/actions/resource";
 import { get, type Resource, type Column, type Field } from "@/lib/resources";
 import { PageHeader, ListError } from "@/components/page-header";
 
@@ -110,6 +110,88 @@ function CellValue({ value }: { value: unknown }) {
   return <span className="tabular">{str}</span>;
 }
 
+// Autocomplete mínimo: input de texto + lista de resultados de
+// GET /{resource}/paginate?search=, debounced. El id elegido viaja en un
+// input hidden con el mismo `name` que usaría un <input type="text"> plano,
+// así que saveRecord no necesita saber que este campo es distinto.
+function AutocompleteField({
+  field,
+  record,
+}: {
+  field: Field;
+  record: Record<string, unknown> | null;
+}) {
+  const id = `field-${field.name}`;
+  const initialLabel = (() => {
+    if (!record) return "";
+    const parentPath = (field.from ?? field.name).split(".").slice(0, -1).join(".");
+    const parent = parentPath ? get(record, parentPath) : null;
+    if (!parent) return "";
+    return (field.displayFields ?? ["name"])
+      .map((f) => (parent as Record<string, unknown>)[f])
+      .filter(Boolean)
+      .join(" · ");
+  })();
+
+  const [query, setQuery] = useState(initialLabel);
+  const [selectedId, setSelectedId] = useState(defaultValueFor(field, record) ?? "");
+  const [options, setOptions] = useState<{ id: string; label: string }[]>([]);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!query.trim() || query === initialLabel) {
+        setOptions([]);
+        return;
+      }
+      searchOptions(field.resource!, query, field.displayFields ?? ["name"]).then((results) => {
+        setOptions(results);
+        setOpen(true);
+      });
+    }, 300);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  return (
+    <div className="relative">
+      <input type="hidden" name={field.name} value={selectedId} />
+      <input
+        id={id}
+        type="text"
+        value={query}
+        placeholder={field.placeholder}
+        autoComplete="off"
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setSelectedId("");
+        }}
+        onFocus={() => options.length > 0 && setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+      />
+      {open && options.length > 0 && (
+        <ul className="elevacion absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-carbon/15 bg-white py-1 text-sm">
+          {options.map((option) => (
+            <li key={option.id}>
+              <button
+                type="button"
+                className="block w-full px-3 py-2 text-left hover:bg-mostaza-tinta/60"
+                onClick={() => {
+                  setSelectedId(option.id);
+                  setQuery(option.label);
+                  setOpen(false);
+                }}
+              >
+                {option.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function FormField({
   field,
   record,
@@ -128,7 +210,9 @@ function FormField({
         {field.label}
         {field.required && <span aria-hidden className="ml-0.5 text-guajillo">*</span>}
       </label>
-      {field.type === "checkbox" ? (
+      {field.type === "autocomplete" ? (
+        <AutocompleteField field={field} record={record} />
+      ) : field.type === "checkbox" ? (
         <label htmlFor={id} className="flex items-center gap-2 rounded-xl border border-carbon/15 bg-carbon/[0.03] px-3 py-2.5 text-sm font-semibold">
           <input id={id} name={field.name} type="checkbox" defaultChecked={defaultValue === "true"} />
           {defaultValue === "true" ? "Activado" : "Desactivado"}
@@ -426,15 +510,6 @@ export function ResourceTable({
           Buscar
         </button>
         {filters}
-        {search ? (
-          <p aria-live="polite" className="text-xs font-bold text-carbon/60">
-            {total === 0 ? "Sin resultados" : `${total} resultado${total === 1 ? "" : "s"}`} para “{search}”
-          </p>
-        ) : (
-          <p className="text-xs font-medium text-carbon/50">
-            {total === 0 ? "Sin registros" : `${total} registro${total === 1 ? "" : "s"} en total`}
-          </p>
-        )}
       </form>
 
       {error ? (

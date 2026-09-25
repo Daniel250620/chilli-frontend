@@ -6,7 +6,7 @@ const columns: Column[] = [
   { key: "name", label: "Nombre", sortable: true },
   { key: "lastName", label: "Apellido", sortable: true },
   { key: "email", label: "Correo", sortable: true },
-  { key: "phone", label: "Teléfono", sortable: true },
+  // { key: "phone", label: "Teléfono", sortable: true },
   { key: "rol.name", label: "Rol", sortable: true },
   { key: "branch.name", label: "Sucursal", sortable: true },
   { key: "status", label: "Activo" },
@@ -22,7 +22,7 @@ const fields: Field[] = [
     required: true,
   },
   { name: "email", label: "Correo", type: "email", required: true, placeholder: "usuario@chiliguajili.mx" },
-  { name: "phone", label: "Teléfono", type: "text", required: true },
+  // { name: "phone", label: "Teléfono", type: "text", required: true },
   { name: "password", label: "Contraseña", type: "text", placeholder: "Solo para crear o cambiar" },
   {
     name: "rolId",

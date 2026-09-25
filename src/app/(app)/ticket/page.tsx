@@ -5,6 +5,7 @@ import type { Column, Field } from "@/lib/resources";
 import { BranchFilter } from "./branch-filter";
 
 const STATUS_OPTIONS = ["validated", "billable", "invoiced", "rejected"] as const;
+const CURRENCY_OPTIONS = ["MXN", "USD"] as const;
 
 const columns: Column[] = [
   { key: "externalTicketId", label: "Ticket", sortable: true },
@@ -17,13 +18,12 @@ const columns: Column[] = [
 
 const fields: Field[] = [
   { name: "externalTicketId", label: "Ticket externo", type: "text", required: true, placeholder: "Folio del POS" },
-  { name: "customerId", label: "Cliente", type: "text", required: true, from: "customer.id", placeholder: "Se elige al cobrar en caja" },
-  { name: "branchId", label: "Sucursal", type: "text", from: "branch.id", placeholder: "Sucursal donde se vendió" },
+  { name: "customerId", label: "Cliente", type: "autocomplete", required: true, from: "customer.id", resource: "customer", displayFields: ["name", "normalizedPhone"], placeholder: "Buscar por nombre o teléfono…" },
+  { name: "branchId", label: "Sucursal", type: "autocomplete", from: "branch.id", resource: "branch", displayFields: ["name"], placeholder: "Buscar por nombre…" },
   { name: "ticketDate", label: "Fecha", type: "datetime", required: true },
   { name: "total", label: "Total", type: "number", required: true, placeholder: "0.00" },
-  { name: "currency", label: "Moneda", type: "text", placeholder: "MXN" },
+  { name: "currency", label: "Moneda", type: "select", options: CURRENCY_OPTIONS },
   { name: "status", label: "Estado", type: "select", required: true, options: STATUS_OPTIONS },
-  { name: "rawResponse", label: "Respuesta del POS (JSON)", type: "json" },
 ];
 
 export default async function TicketPage({

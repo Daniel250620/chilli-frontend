@@ -76,6 +76,32 @@ export async function saveRecord(
   return {};
 }
 
+// Alimenta los campos type "autocomplete": reusa el mismo /paginate que ya
+// filtra por nombre/teléfono (ver applyListQuery en el backend).
+export async function searchOptions(
+  resource: Resource,
+  query: string,
+  displayFields: readonly string[],
+): Promise<{ id: string; label: string }[]> {
+  if (!RESOURCES.includes(resource) || !query.trim()) return [];
+
+  try {
+    const { data } = await httpClient.get(`/${resource}/paginate`, {
+      params: { limit: 10, search: query },
+      headers: await authHeaders(),
+    });
+    return (data.records as Record<string, unknown>[]).map((record) => ({
+      id: String(record.id),
+      label: displayFields
+        .map((f) => record[f])
+        .filter(Boolean)
+        .join(" · "),
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function deleteRecord(
   resource: Resource,
   id: string,

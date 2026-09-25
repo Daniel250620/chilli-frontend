@@ -11,7 +11,10 @@ export function LoginForm() {
   return (
     <form action={formAction} className="flex w-full flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className="text-xs font-extrabold tracking-wider text-carbon uppercase">
+        <label
+          htmlFor="email"
+          className="text-xs font-extrabold tracking-wider text-carbon uppercase"
+        >
           Email
         </label>
         <input
@@ -20,11 +23,14 @@ export function LoginForm() {
           type="email"
           required
           autoComplete="email"
-          placeholder="tu@fondita.mx"
+          placeholder="tu@cuenta.com"
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className="text-xs font-extrabold tracking-wider text-carbon uppercase">
+        <label
+          htmlFor="password"
+          className="text-xs font-extrabold tracking-wider text-carbon uppercase"
+        >
           Contraseña
         </label>
         <input
@@ -37,7 +43,10 @@ export function LoginForm() {
         />
       </div>
       {state?.error && (
-        <p role="alert" className="rounded-xl border border-guajillo/30 bg-guajillo/10 px-3 py-2 text-sm font-semibold text-guajillo">
+        <p
+          role="alert"
+          className="rounded-xl border border-guajillo/30 bg-guajillo/10 px-3 py-2 text-sm font-semibold text-guajillo"
+        >
           {state.error}
         </p>
       )}
