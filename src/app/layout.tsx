@@ -16,7 +16,7 @@ const marker = Permanent_Marker({
 
 export const metadata: Metadata = {
   title: "Chili Guajili · Admin",
-  description: "Panel de la fonda: clientes, tickets, facturas, sucursales y casos.",
+  description: "Panel de Chili Guajili: clientes, tickets, facturas, sucursales y casos.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

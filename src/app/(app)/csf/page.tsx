@@ -11,14 +11,14 @@ const columns: Column[] = [
 ];
 
 const fields: Field[] = [
-  { name: "customerId", label: "Cliente (id)", type: "text", required: true, from: "customer.id" },
-  { name: "rfc", label: "RFC", type: "text", required: true },
+  { name: "customerId", label: "Cliente", type: "text", required: true, from: "customer.id", placeholder: "Dueño de la constancia" },
+  { name: "rfc", label: "RFC", type: "text", required: true, placeholder: "XAXX010101000" },
   { name: "socialReason", label: "Razón social", type: "text", required: true },
-  { name: "postalCode", label: "CP", type: "text", required: true },
-  { name: "encryptedFileRef", label: "Archivo (ref)", type: "text", required: true },
-  { name: "hash", label: "Hash", type: "text", required: true },
-  { name: "parsedJson", label: "JSON parseado", type: "json", required: true },
-  { name: "taxRegimes", label: "Regímenes fiscales", type: "json", required: true },
+  { name: "postalCode", label: "Código postal", type: "text", required: true },
+  { name: "encryptedFileRef", label: "Referencia de archivo", type: "text", required: true },
+  { name: "hash", label: "Folio de verificación", type: "text", required: true },
+  { name: "parsedJson", label: "Datos extraídos (JSON)", type: "json", required: true },
+  { name: "taxRegimes", label: "Regímenes fiscales (JSON)", type: "json", required: true },
   {
     name: "extractionConfidence",
     label: "Confianza de extracción",

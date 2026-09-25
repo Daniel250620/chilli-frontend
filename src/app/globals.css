@@ -89,42 +89,56 @@ body {
     0 8px 24px -12px rgb(33 37 41 / 0.25);
 }
 
-/* Controles base: vocabulario único en toda la app */
-input:not([type="checkbox"]):not([type="radio"]),
-select,
-textarea {
-  width: 100%;
-  border: 1.5px solid rgb(33 37 41 / 0.28);
-  border-radius: 10px;
-  background: #fff;
-  padding: 0.55rem 0.75rem;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  color: var(--color-carbon);
-  transition:
-    border-color 160ms ease-out,
-    box-shadow 160ms ease-out;
+/* Controles base: vocabulario único en toda la app.
+   En @layer base: Tailwind ordena sus capas base < utilities, así que
+   cualquier utilidad (pl-9, pr-9, etc.) en el propio elemento gana sobre este
+   padding por defecto sin importar especificidad — fuera de capa, esta regla
+   le ganaría a las utilidades pase lo que pase (las capas priman sobre la
+   especificidad entre sí). */
+@layer base {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    width: 100%;
+    border: 1.5px solid rgb(33 37 41 / 0.28);
+    border-radius: 10px;
+    background: #fff;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: var(--color-carbon);
+    transition:
+      border-color 160ms ease-out,
+      box-shadow 160ms ease-out;
+  }
+  input:not([type="checkbox"]):not([type="radio"])::placeholder,
+  textarea::placeholder {
+    color: rgb(33 37 41 / 0.42);
+  }
+  input:not([type="checkbox"]):not([type="radio"]):hover,
+  select:hover,
+  textarea:hover {
+    border-color: rgb(33 37 41 / 0.5);
+  }
+  input:not([type="checkbox"]):not([type="radio"]):focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--color-guajillo);
+    box-shadow: 0 0 0 3px rgb(193 39 45 / 0.18);
+  }
+  input[type="checkbox"] {
+    width: 1.05rem;
+    height: 1.05rem;
+    accent-color: var(--color-guajillo);
+  }
 }
-input:not([type="checkbox"]):not([type="radio"])::placeholder,
-textarea::placeholder {
-  color: rgb(33 37 41 / 0.42);
-}
-input:not([type="checkbox"]):not([type="radio"]):hover,
-select:hover,
-textarea:hover {
-  border-color: rgb(33 37 41 / 0.5);
-}
-input:not([type="checkbox"]):not([type="radio"]):focus,
-select:focus,
-textarea:focus {
-  outline: none;
-  border-color: var(--color-guajillo);
-  box-shadow: 0 0 0 3px rgb(193 39 45 / 0.18);
-}
-input[type="checkbox"] {
-  width: 1.05rem;
-  height: 1.05rem;
-  accent-color: var(--color-guajillo);
+/* input[type=search] trae su propia "x" nativa de WebKit que se monta encima
+   de nuestro botón de limpiar personalizado (ResourceTable). Se desactiva. */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 button {

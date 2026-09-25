@@ -12,18 +12,18 @@ const columns: Column[] = [
   { key: "branch.name", label: "Sucursal", sortable: true },
   { key: "ticketDate", label: "Fecha", sortable: true },
   { key: "total", label: "Total", sortable: true },
-  { key: "status", label: "Estatus" },
+  { key: "status", label: "Estado" },
 ];
 
 const fields: Field[] = [
-  { name: "externalTicketId", label: "Ticket externo", type: "text", required: true },
-  { name: "customerId", label: "Cliente (id)", type: "text", required: true, from: "customer.id" },
-  { name: "branchId", label: "Sucursal (id)", type: "text", from: "branch.id" },
+  { name: "externalTicketId", label: "Ticket externo", type: "text", required: true, placeholder: "Folio del POS" },
+  { name: "customerId", label: "Cliente", type: "text", required: true, from: "customer.id", placeholder: "Se elige al cobrar en caja" },
+  { name: "branchId", label: "Sucursal", type: "text", from: "branch.id", placeholder: "Sucursal donde se vendió" },
   { name: "ticketDate", label: "Fecha", type: "datetime", required: true },
-  { name: "total", label: "Total", type: "number", required: true },
-  { name: "currency", label: "Moneda", type: "text" },
-  { name: "status", label: "Estatus", type: "select", required: true, options: STATUS_OPTIONS },
-  { name: "rawResponse", label: "Respuesta cruda", type: "json" },
+  { name: "total", label: "Total", type: "number", required: true, placeholder: "0.00" },
+  { name: "currency", label: "Moneda", type: "text", placeholder: "MXN" },
+  { name: "status", label: "Estado", type: "select", required: true, options: STATUS_OPTIONS },
+  { name: "rawResponse", label: "Respuesta del POS (JSON)", type: "json" },
 ];
 
 export default async function TicketPage({
@@ -60,15 +60,6 @@ export default async function TicketPage({
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
-      {isAdmin && (
-        <BranchFilter
-          branches={branches.map((b) => ({ id: String(b.id), name: String(b.name) }))}
-          branchId={branchId}
-          search={search}
-          sort={sort}
-          order={order}
-        />
-      )}
       <ResourceTable
         resource="ticket"
         records={records}
@@ -85,6 +76,17 @@ export default async function TicketPage({
         sort={sort}
         order={order}
         extraParams={branchId ? { branchId } : undefined}
+        filters={
+          isAdmin && (
+            <BranchFilter
+              branches={branches.map((b) => ({ id: String(b.id), name: String(b.name) }))}
+              branchId={branchId}
+              search={search}
+              sort={sort}
+              order={order}
+            />
+          )
+        }
       />
     </div>
   );

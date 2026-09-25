@@ -3,14 +3,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { LogoutButton } from "@/components/logout-button";
-import { SideNav } from "@/components/side-nav";
+import { MobileNav, SideNav } from "@/components/side-nav";
 
 const NAV_LINKS = [
   { href: "/customer", label: "Clientes", hint: "Marchantitx registrados" },
   { href: "/ticket", label: "Tickets", hint: "Lo que se vendió en POS" },
   { href: "/invoice", label: "Facturas", hint: "Tickets ya facturados" },
   { href: "/csf", label: "CSF", hint: "Constancias fiscales" },
-  { href: "/branch", label: "Sucursales", hint: "Las fondas físicas" },
+  { href: "/branch", label: "Sucursales", hint: "Tiendas físicas" },
   { href: "/case", label: "Casos", hint: "Soporte y seguimiento" },
   { href: "/chat", label: "Chat", hint: "Mockup de conversaciones (ejemplo)" },
   { href: "/user", label: "Usuarios", hint: "Usuarios del panel" },
@@ -32,7 +32,11 @@ export default async function AppLayout({
       {/* Sidebar desktop */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-carbon text-white md:flex">
         <div className="fondo-fonda border-b-2 border-black px-5 pt-5 pb-4">
-          <Link href="/customer" className="block">
+          <Link
+            href="/customer"
+            className="block"
+            aria-label="Chili Guajili · inicio"
+          >
             <Image
               src="/logo-cg.png"
               alt="Chili Guajili"
@@ -41,16 +45,6 @@ export default async function AppLayout({
               priority
               className="h-auto w-[180px] drop-shadow-[1.5px_1.5px_0_#000]"
             />
-            <span className="mt-2 block truncate text-sm font-bold text-nota">
-              {[session.user.name, session.user.lastName]
-                .filter(Boolean)
-                .join(" ") || session.user.email}
-            </span>
-            <span className="block text-[11px] font-extrabold tracking-[0.18em] text-nota uppercase">
-              {[session.user.rol, session.user.branch?.name]
-                .filter(Boolean)
-                .join(" ") || "Admin de la fonda"}
-            </span>
           </Link>
         </div>
 
@@ -58,21 +52,30 @@ export default async function AppLayout({
           <SideNav links={NAV_LINKS} />
         </div>
 
-        <div className="border-t border-white/10 p-4">
+        <div className="border-t border-white/15 p-4">
           <div className="flex items-center gap-3">
             <span
               aria-hidden
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-mostaza text-sm font-extrabold text-nota uppercase"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-black bg-mostaza text-sm font-extrabold text-nota uppercase shadow-[2px_2px_0_0_rgba(255,255,255,0.25)]"
             >
               {initial.toUpperCase()}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold">
-                {session.user.name ?? "Marchantitx"}
+              <p className="truncate text-sm font-bold text-white">
+                {[session.user.name, session.user.lastName]
+                  .filter(Boolean)
+                  .join(" ") ?? "Marchante"}
               </p>
-              <p className="truncate text-xs text-white/55">
+              <p className="truncate text-xs font-medium text-white/70">
                 {session.user.email}
               </p>
+              {(session.user.rol || session.user.branch?.name) && (
+                <p className="truncate text-[10px] font-extrabold tracking-[0.16em] text-mostaza-claro/90 uppercase">
+                  {[session.user.rol, session.user.branch?.name]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              )}
             </div>
           </div>
           <div className="mt-3">
@@ -91,20 +94,7 @@ export default async function AppLayout({
             height={48}
             className="h-auto w-[140px] drop-shadow-[1px_1px_0_#000]"
           />
-          <nav
-            aria-label="Secciones"
-            className="mt-2 flex gap-2 overflow-x-auto pb-2"
-          >
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="shrink-0 rounded-full border border-black/70 bg-tiza px-3 py-1 text-[11px] font-extrabold tracking-wide uppercase"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <MobileNav links={NAV_LINKS} />
         </header>
 
         <main className="w-full flex-1 px-4 py-6 sm:px-6 md:py-8">
@@ -113,7 +103,7 @@ export default async function AppLayout({
 
         <footer className="px-6 pb-6">
           <p className="text-center text-[11px] font-bold tracking-[0.16em] text-carbon/40 uppercase">
-            Hecho con chile guajillo · A partir de la 1:00pm
+            Hecho con chile guajillo · Powered by Karimnot
           </p>
         </footer>
       </div>

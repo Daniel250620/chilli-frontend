@@ -17,9 +17,9 @@ const fields: Field[] = [
     required: true,
     placeholder: "+5215512345678",
   },
-  { name: "name", label: "Nombre", type: "text" },
-  { name: "email", label: "Email", type: "email" },
-  { name: "preferredCsfId", label: "CSF preferida (id)", type: "text", from: "preferredCsf.id" },
+  { name: "name", label: "Nombre", type: "text", placeholder: "Nombre del marchantitx" },
+  { name: "email", label: "Correo", type: "email", placeholder: "correo@ejemplo.mx" },
+  { name: "preferredCsfId", label: "CSF preferida", type: "text", from: "preferredCsf.id", placeholder: "Se asigna desde Constancias fiscales" },
 ];
 
 export default async function CustomerPage({

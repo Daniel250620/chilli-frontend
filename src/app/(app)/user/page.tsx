@@ -5,7 +5,7 @@ import type { Column, Field } from "@/lib/resources";
 const columns: Column[] = [
   { key: "name", label: "Nombre", sortable: true },
   { key: "lastName", label: "Apellido", sortable: true },
-  { key: "email", label: "Email", sortable: true },
+  { key: "email", label: "Correo", sortable: true },
   { key: "phone", label: "Teléfono", sortable: true },
   { key: "rol.name", label: "Rol", sortable: true },
   { key: "branch.name", label: "Sucursal", sortable: true },
@@ -21,17 +21,17 @@ const fields: Field[] = [
     type: "text",
     required: true,
   },
-  { name: "email", label: "Email", type: "email", required: true },
+  { name: "email", label: "Correo", type: "email", required: true, placeholder: "usuario@chiliguajili.mx" },
   { name: "phone", label: "Teléfono", type: "text", required: true },
-  { name: "password", label: "Contraseña", type: "text" },
+  { name: "password", label: "Contraseña", type: "text", placeholder: "Solo para crear o cambiar" },
   {
     name: "rolId",
-    label: "Rol (id)",
+    label: "Rol",
     type: "text",
     required: true,
     from: "rol.id",
   },
-  { name: "branchId", label: "Sucursal (id)", type: "text", from: "branch.id" },
+  { name: "branchId", label: "Sucursal", type: "text", from: "branch.id" },
   { name: "position", label: "Puesto", type: "text" },
   { name: "status", label: "Activo", type: "checkbox" },
 ];
@@ -63,7 +63,7 @@ export default async function UserPage({
         fields={fields}
         title="Usuarios"
         accent="de la casa"
-        description="Marchantitx, quien atiende la fonda: roles, sucursales y accesos."
+        description="Marchantitx, quien atiende la casa: roles, sucursales y accesos."
         error={error}
         search={search}
         sort={sort}

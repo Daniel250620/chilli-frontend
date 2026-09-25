@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { saveRecord, deleteRecord, type ActionState } from "@/lib/actions/resource";
 import { get, type Resource, type Column, type Field } from "@/lib/resources";
 import { PageHeader, ListError } from "@/components/page-header";
@@ -39,6 +40,45 @@ function defaultValueFor(field: Field, record: Record<string, unknown> | null) {
   return String(value);
 }
 
+const ES_LABELS: Record<string, string> = {
+  validated: "Validado",
+  billable: "Facturable",
+  invoiced: "Facturado",
+  rejected: "Rechazado",
+  draft: "Borrador",
+  sending: "Enviando",
+  issued: "Emitida",
+  error: "Error",
+  cancelled: "Cancelada",
+  new: "Nuevo",
+  assigned: "Asignado",
+  in_progress: "En progreso",
+  resolved: "Resuelto",
+  closed: "Cerrado",
+  low: "Baja",
+  medium: "Media",
+  high: "Alta",
+  critical: "Crítica",
+  preferida: "Preferida",
+  activo: "Activo",
+  inactivo: "Inactivo",
+};
+
+const RESOURCE_SINGULAR: Record<Resource, string> = {
+  user: "usuario",
+  customer: "cliente",
+  ticket: "ticket",
+  branch: "sucursal",
+  invoice: "factura",
+  csf: "CSF",
+  case: "caso",
+};
+
+function labelEs(value: unknown): string {
+  const str = String(value ?? "");
+  return ES_LABELS[str.toLowerCase()] ?? str.replace(/_/g, " ");
+}
+
 function toneFor(value: unknown): string {
   const v = String(value ?? "").toLowerCase();
   if (["rejected", "error", "cancelled", "cancelado", "critical", "no", "false", "inactivo"].includes(v))
@@ -63,8 +103,8 @@ function CellValue({ value }: { value: unknown }) {
   const str = String(value);
   if (/^(validated|billable|invoiced|rejected|draft|sending|issued|error|cancelled|new|assigned|in_progress|resolved|closed|low|medium|high|critical)$/i.test(str))
     return (
-      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold ${toneFor(str)}`}>
-        {str.replace("_", " ")}
+      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold whitespace-nowrap ${toneFor(str)}`}>
+        {labelEs(str)}
       </span>
     );
   return <span className="tabular">{str}</span>;
@@ -97,10 +137,10 @@ function FormField({
         <textarea id={id} name={field.name} required={field.required} defaultValue={defaultValue} rows={4} className="font-mono text-xs" />
       ) : field.type === "select" ? (
         <select id={id} name={field.name} required={field.required} defaultValue={defaultValue ?? ""}>
-          {!field.required && <option value="" />}
+          <option value="">{field.required ? "Seleccionar…" : "Sin definir"}</option>
           {field.options?.map((option) => (
             <option key={option} value={option}>
-              {option}
+              {labelEs(option)}
             </option>
           ))}
         </select>
@@ -144,38 +184,50 @@ function RecordForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
+  const singular = RESOURCE_SINGULAR[resource] ?? "registro";
   return (
-    <form action={formAction} className="p-5 sm:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-extrabold tracking-wider uppercase">
-          {editingId ? (
-            <>Editando <span className="font-marker text-guajillo normal-case">la orden</span></>
-          ) : (
-            <>Nuevo <span className="font-marker text-guajillo normal-case">marchantitx</span></>
-          )}
-        </h2>
+    <form action={formAction} className="flex flex-col">
+      <div className="flex items-start justify-between gap-3 border-b border-carbon/10 bg-mostaza-tinta/70 px-5 py-4 sm:px-6">
+        <div>
+          <h2 className="text-sm font-extrabold tracking-wider uppercase">
+            {editingId ? (
+              <>Editar <span className="font-marker text-guajillo normal-case">{singular}</span></>
+            ) : (
+              <>Nuevo <span className="font-marker text-guajillo normal-case">{singular}</span></>
+            )}
+          </h2>
+          <p className="mt-1 text-xs font-medium text-carbon/60">
+            {editingId
+              ? "Revisa los datos y guarda para aplicar los cambios."
+              : "Completa los datos obligatorios (*) y guarda para darlo de alta."}
+          </p>
+        </div>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Cerrar"
-          className="rounded-lg px-2 py-1 text-lg leading-none font-extrabold text-carbon/50 transition hover:bg-carbon/5 hover:text-carbon"
+          aria-label="Cerrar ventana"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl leading-none font-extrabold text-carbon/50 transition hover:bg-carbon/5 hover:text-carbon"
         >
           ×
         </button>
       </div>
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 px-5 py-5 sm:grid-cols-2 sm:px-6">
         {fields.map((field) => (
           <FormField key={field.name} field={field} record={record} />
         ))}
       </div>
-      {state?.error && <p role="alert" className="mt-4 rounded-xl border border-guajillo/30 bg-guajillo/10 px-3 py-2 text-sm font-semibold text-guajillo">{state.error}</p>}
-      <div className="mt-5 flex flex-wrap gap-2">
+      {state?.error && (
+        <p role="alert" className="mx-5 rounded-xl border border-guajillo/30 bg-guajillo/10 px-3 py-2 text-sm font-semibold text-guajillo sm:mx-6">
+          No se pudo guardar: {state.error}
+        </p>
+      )}
+      <div className="flex flex-wrap gap-2 border-t border-carbon/10 bg-white/60 px-5 py-4 sm:px-6">
         <button
           type="submit"
           disabled={pending}
-          className="rounded-xl border-2 border-black bg-guajillo px-5 py-2.5 text-xs font-extrabold tracking-wider text-white uppercase shadow-[3px_3px_0_0_#000] transition duration-150 hover:-translate-y-0.5 hover:bg-guajillo-oscuro active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+          className="rounded-xl border-2 border-black bg-guajillo px-5 py-2.5 text-xs font-extrabold tracking-wider text-white uppercase shadow-[3px_3px_0_0_#000] transition duration-150 hover:-translate-y-0.5 hover:bg-guajillo-oscuro active:translate-x-0.5 active:translate-y-0.5 active:shadow-none disabled:translate-0 disabled:shadow-[3px_3px_0_0_#000]"
         >
-          {pending ? "Guardando..." : "Guardar"}
+          {pending ? "Guardando…" : "Guardar"}
         </button>
         <button
           type="button"
@@ -205,7 +257,7 @@ function DeleteButton({ resource, id }: { resource: Resource; id: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg px-2.5 py-1 text-xs font-extrabold tracking-wide text-guajillo uppercase transition hover:bg-guajillo/10"
+        className="flex min-h-[44px] items-center rounded-lg px-2.5 text-xs font-extrabold tracking-wide text-guajillo uppercase transition hover:bg-guajillo/10"
       >
         Borrar
       </button>
@@ -274,6 +326,7 @@ export function ResourceTable({
   sort,
   order,
   extraParams,
+  filters,
 }: {
   resource: Resource;
   records: Record<string, unknown>[];
@@ -290,8 +343,11 @@ export function ResourceTable({
   sort?: string;
   order?: string;
   extraParams?: Record<string, string>;
+  filters?: React.ReactNode;
 }) {
   const [mode, setMode] = useState<null | "new" | string>(null);
+  const router = useRouter();
+  const pathname = usePathname();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const editingId = mode && mode !== "new" ? mode : null;
   const editingRecord = records.find((r) => String(r.id) === editingId) ?? null;
@@ -323,31 +379,62 @@ export function ResourceTable({
       />
 
       <form
-        method="get"
+        role="search"
+        aria-label={`Buscar en ${title}`}
         onSubmit={(e) => {
+          // Navegación de cliente (sin recarga de página): actualiza la URL y
+          // el Server Component vuelve a pedir los datos. El offset se resetea.
+          e.preventDefault();
           const input = e.currentTarget.elements.namedItem("search") as HTMLInputElement | null;
-          if (input && !input.value.trim()) input.removeAttribute("name");
+          const value = input?.value.trim() ?? "";
+          const params = baseParams(value || undefined, sort, order, extraParams);
+          const qs = params.toString();
+          router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
         }}
-        className="flex gap-2"
+        className="flex flex-wrap items-center gap-2"
       >
-        {sort && <input type="hidden" name="sort" value={sort} />}
-        {sort && order && <input type="hidden" name="order" value={order} />}
-        {Object.entries(extraParams ?? {}).map(
-          ([key, value]) => value && <input key={key} type="hidden" name={key} value={value} />,
-        )}
-        <input
-          type="search"
-          name="search"
-          defaultValue={search}
-          placeholder="Buscar…"
-          className="max-w-sm"
-        />
+        <div className="relative w-full max-w-sm">
+          <span aria-hidden className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-carbon/40">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="2" />
+              <path d="M11 11l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </span>
+          <input
+            type="search"
+            name="search"
+            key={search ?? ""}
+            defaultValue={search}
+            placeholder="Buscar por nombre, folio, RFC…"
+            aria-label="Buscar"
+            className="pr-9 pl-9"
+          />
+          {search && (
+            <Link
+              href={pageHref(0, undefined, sort, order, extraParams)}
+              aria-label="Limpiar búsqueda"
+              className="absolute top-1/2 right-2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-base leading-none font-bold text-carbon/40 transition hover:bg-carbon/5 hover:text-carbon"
+            >
+              ×
+            </Link>
+          )}
+        </div>
         <button
           type="submit"
-          className="rounded-xl border-2 border-carbon/20 bg-white px-4 py-2 text-xs font-extrabold tracking-wider uppercase transition hover:border-carbon/60"
+          className="rounded-xl border-2 border-black bg-mostaza px-4 py-2 text-xs font-extrabold tracking-wider text-nota uppercase shadow-[2px_2px_0_0_#000] transition duration-150 hover:-translate-y-0.5"
         >
           Buscar
         </button>
+        {filters}
+        {search ? (
+          <p aria-live="polite" className="text-xs font-bold text-carbon/60">
+            {total === 0 ? "Sin resultados" : `${total} resultado${total === 1 ? "" : "s"}`} para “{search}”
+          </p>
+        ) : (
+          <p className="text-xs font-medium text-carbon/50">
+            {total === 0 ? "Sin registros" : `${total} registro${total === 1 ? "" : "s"} en total`}
+          </p>
+        )}
       </form>
 
       {error ? (
@@ -364,9 +451,9 @@ export function ResourceTable({
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] border-collapse text-left text-sm">
-                  <thead>
-                    <tr className="bg-carbon text-white">
+                <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+                  <thead className="sticky top-0 z-[1]">
+                    <tr className="border-b border-carbon/10 bg-[#faf6ec] text-carbon">
                       {columns.map((col) => {
                         const active = col.sortable && col.key === sort;
                         const ariaSort = active ? (order === "desc" ? "descending" : "ascending") : undefined;
@@ -391,8 +478,8 @@ export function ResourceTable({
                           </th>
                         );
                       })}
-                      <th className="px-4 py-3 text-[11px] font-extrabold tracking-wider uppercase">
-                        <span className="sr-only">Acciones</span>
+                      <th scope="col" className="px-4 py-3 text-right text-[11px] font-extrabold tracking-wider uppercase">
+                        Acciones
                       </th>
                     </tr>
                   </thead>
@@ -408,11 +495,12 @@ export function ResourceTable({
                           </td>
                         ))}
                         <td className="px-4 py-2 align-middle whitespace-nowrap">
-                          <div className="flex items-center gap-1">
+                          <div className="flex min-h-[44px] items-center gap-1">
                             <button
                               type="button"
                               onClick={() => setMode(String(record.id))}
-                              className="rounded-lg px-2.5 py-1 text-xs font-extrabold tracking-wide text-pizarra-oscuro uppercase transition hover:bg-pizarra/15"
+                              aria-label={`Editar registro ${String(record.id).slice(0, 8)}`}
+                              className="flex min-h-[44px] items-center rounded-lg px-2.5 text-xs font-extrabold tracking-wide text-pizarra-oscuro uppercase transition hover:bg-pizarra/15"
                             >
                               Editar
                             </button>
@@ -429,7 +517,9 @@ export function ResourceTable({
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs font-bold tracking-wide text-carbon/55 uppercase">
-              {total === 0 ? "0 registros" : `${from}–${to} de ${total}`}
+              {total === 0
+                ? "0 registros"
+                : `${from}–${to} de ${total} · Página ${Math.floor(offset / limit) + 1} de ${Math.max(1, Math.ceil(total / limit))}`}
             </p>
             <div className="flex gap-2">
               {offset > 0 ? (

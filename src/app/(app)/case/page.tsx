@@ -15,16 +15,28 @@ const columns: Column[] = [
   { key: "folio", label: "Folio", sortable: true },
   { key: "description", label: "Descripción" },
   { key: "priority", label: "Prioridad" },
-  { key: "status", label: "Estatus" },
+  { key: "status", label: "Estado" },
   { key: "slaDueAt", label: "SLA", sortable: true },
   { key: "assignedUser.name", label: "Asignado", sortable: true },
 ];
 
 const fields: Field[] = [
-  { name: "folio", label: "Folio", type: "text", required: true },
-  { name: "description", label: "Descripción", type: "text", required: true },
-  { name: "categoryId", label: "Categoría (id)", type: "text", required: true },
-  { name: "areaId", label: "Área (id)", type: "text", required: true },
+  {
+    name: "folio",
+    label: "Folio",
+    type: "text",
+    required: true,
+    placeholder: "CAS-0001",
+  },
+  {
+    name: "description",
+    label: "Descripción",
+    type: "text",
+    required: true,
+    placeholder: "¿Qué necesita el marchantitx?",
+  },
+  { name: "categoryId", label: "Categoría", type: "text", required: true },
+  { name: "areaId", label: "Área", type: "text", required: true },
   {
     name: "priority",
     label: "Prioridad",
@@ -32,28 +44,33 @@ const fields: Field[] = [
     required: true,
     options: PRIORITY_OPTIONS,
   },
-  { name: "status", label: "Estatus", type: "select", options: STATUS_OPTIONS },
+  { name: "status", label: "Estado", type: "select", options: STATUS_OPTIONS },
   { name: "slaDueAt", label: "SLA", type: "datetime", required: true },
   {
     name: "customerId",
-    label: "Cliente (id)",
+    label: "Cliente",
     type: "text",
     from: "customer.id",
   },
-  { name: "customerNameSnapshot", label: "Nombre cliente", type: "text" },
+  { name: "customerNameSnapshot", label: "Nombre del cliente", type: "text" },
   {
     name: "assignedUserId",
-    label: "Asignado (id)",
+    label: "Persona asignada",
     type: "text",
     from: "assignedUser.id",
   },
-  { name: "branchId", label: "Sucursal (id)", type: "text", from: "branch.id" },
+  { name: "branchId", label: "Sucursal", type: "text", from: "branch.id" },
 ];
 
 export default async function CasePage({
   searchParams,
 }: {
-  searchParams: Promise<{ offset?: string; search?: string; sort?: string; order?: string }>;
+  searchParams: Promise<{
+    offset?: string;
+    search?: string;
+    sort?: string;
+    order?: string;
+  }>;
 }) {
   const { offset: offsetParam, search, sort, order } = await searchParams;
   const offset = Number(offsetParam ?? 0);
@@ -76,8 +93,8 @@ export default async function CasePage({
         columns={columns}
         fields={fields}
         title="Casos"
-        accent=""
-        description="Soporte y seguimiento: prioridad, asignado y estatus."
+        accent="Reportados"
+        description="Soporte y seguimiento: prioridad, asignado y estado."
         error={error}
         search={search}
         sort={sort}

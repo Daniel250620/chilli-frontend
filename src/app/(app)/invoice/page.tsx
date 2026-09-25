@@ -8,24 +8,24 @@ const columns: Column[] = [
   { key: "rfcSnapshot", label: "RFC", sortable: true },
   { key: "businessNameSnapshot", label: "Razón social", sortable: true },
   { key: "cfdiUse", label: "Uso CFDI", sortable: true },
-  { key: "status", label: "Estatus" },
+  { key: "status", label: "Estado" },
   { key: "fiscalUuid", label: "UUID fiscal", sortable: true },
 ];
 
 const fields: Field[] = [
-  { name: "ticketId", label: "Ticket (id)", type: "text", required: true, from: "ticket.id" },
-  { name: "csfId", label: "CSF (id)", type: "text", required: true, from: "csf.id" },
-  { name: "cfdiUse", label: "Uso CFDI", type: "text", required: true },
+  { name: "ticketId", label: "Ticket", type: "text", required: true, from: "ticket.id", placeholder: "Ticket que se factura" },
+  { name: "csfId", label: "CSF", type: "text", required: true, from: "csf.id", placeholder: "Constancia fiscal usada" },
+  { name: "cfdiUse", label: "Uso de CFDI", type: "text", required: true, placeholder: "G03, S01…" },
   { name: "rfcSnapshot", label: "RFC", type: "text", required: true },
   { name: "businessNameSnapshot", label: "Razón social", type: "text", required: true },
-  { name: "fiscalZipSnapshot", label: "CP fiscal", type: "text", required: true },
+  { name: "fiscalZipSnapshot", label: "Código postal fiscal", type: "text", required: true },
   { name: "taxRegimeSnapshot", label: "Régimen fiscal", type: "text", required: true },
-  { name: "status", label: "Estatus", type: "select", required: true, options: STATUS_OPTIONS },
-  { name: "idempotencyKey", label: "Idempotency key", type: "text", required: true },
-  { name: "externalInvoiceId", label: "Id externo", type: "text" },
+  { name: "status", label: "Estado", type: "select", required: true, options: STATUS_OPTIONS },
+  { name: "idempotencyKey", label: "Clave de idempotencia", type: "text", required: true, placeholder: "Se genera en automático" },
+  { name: "externalInvoiceId", label: "Folio externo", type: "text" },
   { name: "fiscalUuid", label: "UUID fiscal", type: "text" },
-  { name: "pdfRef", label: "PDF", type: "text" },
-  { name: "xmlRef", label: "XML", type: "text" },
+  { name: "pdfRef", label: "PDF (referencia)", type: "text" },
+  { name: "xmlRef", label: "XML (referencia)", type: "text" },
 ];
 
 export default async function InvoicePage({

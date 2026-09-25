@@ -27,7 +27,7 @@ export default function LoginPage() {
         </div>
 
         <p className="mt-5 text-center text-xs font-bold tracking-wide text-nota uppercase">
-          A partir de la 1:00pm · From 1:00pm
+          FACTURACION Y QUEJAS
         </p>
       </div>
     </div>

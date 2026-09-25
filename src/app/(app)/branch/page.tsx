@@ -48,8 +48,8 @@ export default async function BranchPage({
         columns={columns}
         fields={fields}
         title="Sucursales"
-        accent="de la fonda"
-        description="Marchantitx, aquí están las fondas físicas: serie, entrega y ubicación."
+        accent="del restaurante"
+        description="Marchantitx, aquí están las tiendas: serie, entrega y ubicación."
         error={error}
         search={search}
         sort={sort}
