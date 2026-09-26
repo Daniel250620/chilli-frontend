@@ -25,10 +25,15 @@ export function PageHeader({
   );
 }
 
-export function ListError({ message }: { message: string }) {
+export function ListError({ message, retryHref }: { message: string; retryHref?: string }) {
   return (
-    <p role="alert" className="elevacion rounded-2xl border border-guajillo/30 bg-guajillo/10 px-4 py-3 text-sm font-semibold text-guajillo">
-      {message}
-    </p>
+    <div role="alert" className="elevacion flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-guajillo/30 bg-guajillo/10 px-4 py-3">
+      <p className="text-sm font-semibold text-guajillo">{message}</p>
+      {retryHref && (
+        <a href={retryHref} className="text-xs font-extrabold tracking-wider uppercase text-guajillo hover:underline">
+          Reintentar
+        </a>
+      )}
+    </div>
   );
 }

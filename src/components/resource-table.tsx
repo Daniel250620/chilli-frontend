@@ -7,6 +7,7 @@ import { saveRecord, deleteRecord, searchOptions, type ActionState } from "@/lib
 import { get, type Resource, type Column, type Field } from "@/lib/resources";
 import { PageHeader, ListError } from "@/components/page-header";
 import { CellValue, labelEs } from "@/components/cell-value";
+import { Selector } from "@/components/selector";
 
 const initialState: ActionState = {};
 
@@ -161,14 +162,15 @@ function FormField({
       ) : field.type === "json" ? (
         <textarea id={id} name={field.name} required={field.required} defaultValue={defaultValue} rows={4} className="font-mono text-xs" />
       ) : field.type === "select" ? (
-        <select id={id} name={field.name} required={field.required} defaultValue={defaultValue ?? ""}>
-          <option value="">{field.required ? "Seleccionar…" : "Sin definir"}</option>
-          {field.options?.map((option) => (
-            <option key={option} value={option}>
-              {labelEs(option)}
-            </option>
-          ))}
-        </select>
+        <Selector
+          id={id}
+          name={field.name}
+          required={field.required}
+          defaultValue={defaultValue ?? ""}
+          placeholder={field.required ? "Seleccionar…" : "Sin definir"}
+          options={(field.options ?? []).map((option) => ({ value: option, label: labelEs(option) }))}
+          className="w-full"
+        />
       ) : (
         <input
           id={id}

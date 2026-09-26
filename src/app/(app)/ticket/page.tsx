@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { paginateResource } from "@/lib/paginate";
 import { ResourceTable } from "@/components/resource-table";
 import { getSession } from "@/lib/session";
@@ -35,17 +36,31 @@ export default async function TicketPage({
     sort?: string;
     order?: string;
     branchId?: string;
+    customerId?: string;
+    customerName?: string;
+    customerPhone?: string;
   }>;
 }) {
-  const { offset: offsetParam, search, sort, order, branchId } = await searchParams;
+  const { offset: offsetParam, search, sort, order, branchId, customerId, customerName, customerPhone } = await searchParams;
   const offset = Number(offsetParam ?? 0);
+  // ponytail: a la API solo van filtros reales; nombre/teléfono solo adornan
+  // la URL y el chip de retorno.
+  const apiExtra = {
+    ...(branchId ? { branchId } : {}),
+    ...(customerId ? { customerId } : {}),
+  };
+  const urlExtra = {
+    ...apiExtra,
+    ...(customerName ? { customerName } : {}),
+    ...(customerPhone ? { customerPhone } : {}),
+  };
   const { records, total, limit, error } = await paginateResource(
     "ticket",
     offset,
     search,
     sort,
     order,
-    branchId ? { branchId } : undefined,
+    Object.keys(apiExtra).length > 0 ? apiExtra : undefined,
   );
 
   // ponytail: chequeo de rol inline, primer caso de UI condicionada por rol.
@@ -75,18 +90,32 @@ export default async function TicketPage({
         search={search}
         sort={sort}
         order={order}
-        extraParams={branchId ? { branchId } : undefined}
+        extraParams={Object.keys(urlExtra).length > 0 ? urlExtra : undefined}
         filters={
-          isAdmin && (
-            <BranchFilter
-              key={branchId ?? ""}
-              branches={branches.map((b) => ({ id: String(b.id), name: String(b.name) }))}
-              branchId={branchId}
-              search={search}
-              sort={sort}
-              order={order}
-            />
-          )
+          <>
+            {isAdmin && (
+              <BranchFilter
+                key={`${branchId ?? ""}-${customerId ?? ""}`}
+                branches={branches.map((b) => ({ id: String(b.id), name: String(b.name) }))}
+                branchId={branchId}
+                search={search}
+                sort={sort}
+                order={order}
+                customerId={customerId}
+                customerName={customerName}
+                customerPhone={customerPhone}
+              />
+            )}
+            {customerId && (
+              <Link
+                href={`/customer/${encodeURIComponent(customerId)}`}
+                className="rounded-xl border border-carbon/15 bg-carbon/[0.03] px-3 py-2 text-xs font-extrabold tracking-wider uppercase text-carbon/60 hover:underline"
+                title="Volver al cliente"
+              >
+                Cliente · {customerName || customerPhone || customerId.slice(0, 8)} ↩
+              </Link>
+            )}
+          </>
         }
       />
     </div>

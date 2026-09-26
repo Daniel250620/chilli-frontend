@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { paginateResource } from "@/lib/paginate";
 import { ResourceTable } from "@/components/resource-table";
 import type { Column, Field } from "@/lib/resources";
@@ -70,16 +71,26 @@ export default async function CasePage({
     search?: string;
     sort?: string;
     order?: string;
+    customerId?: string;
+    customerName?: string;
+    customerPhone?: string;
   }>;
 }) {
-  const { offset: offsetParam, search, sort, order } = await searchParams;
+  const { offset: offsetParam, search, sort, order, customerId, customerName, customerPhone } = await searchParams;
   const offset = Number(offsetParam ?? 0);
+  const apiExtra = customerId ? { customerId } : undefined;
+  const urlExtra = {
+    ...(apiExtra ?? {}),
+    ...(customerName ? { customerName } : {}),
+    ...(customerPhone ? { customerPhone } : {}),
+  };
   const { records, total, limit, error } = await paginateResource(
     "case",
     offset,
     search,
     sort,
     order,
+    apiExtra,
   );
 
   return (
@@ -99,6 +110,18 @@ export default async function CasePage({
         search={search}
         sort={sort}
         order={order}
+        extraParams={Object.keys(urlExtra).length > 0 ? urlExtra : undefined}
+        filters={
+          customerId ? (
+            <Link
+              href={`/customer/${encodeURIComponent(customerId)}`}
+              className="rounded-xl border border-carbon/15 bg-carbon/[0.03] px-3 py-2 text-xs font-extrabold tracking-wider uppercase text-carbon/60 hover:underline"
+              title="Volver al cliente"
+            >
+              Cliente · {customerName || customerPhone || customerId.slice(0, 8)} ↩
+            </Link>
+          ) : undefined
+        }
       />
     </div>
   );
