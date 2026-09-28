@@ -25,6 +25,8 @@ const fields: Field[] = [
   { name: "total", label: "Total", type: "number", required: true, placeholder: "0.00" },
   { name: "currency", label: "Moneda", type: "select", options: CURRENCY_OPTIONS },
   { name: "status", label: "Estado", type: "select", required: true, options: STATUS_OPTIONS },
+  { name: "createdByUserId", label: "Creado por", type: "autocomplete", required: true, from: "createdByUser.id", resource: "user", displayFields: ["name", "email"], placeholder: "Buscar por nombre o correo…" },
+  { name: "rawResponse", label: "Respuesta cruda (JSON)", type: "json" },
 ];
 
 export default async function TicketPage({

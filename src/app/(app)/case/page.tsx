@@ -61,6 +61,7 @@ const fields: Field[] = [
     from: "assignedUser.id",
   },
   { name: "branchId", label: "Sucursal", type: "text", from: "branch.id" },
+  { name: "createdByUserId", label: "Creado por", type: "autocomplete", required: true, from: "createdByUser.id", resource: "user", displayFields: ["name", "email"], placeholder: "Buscar por nombre o correo…" },
 ];
 
 export default async function CasePage({

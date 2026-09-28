@@ -26,6 +26,7 @@ const fields: Field[] = [
   { name: "fiscalUuid", label: "UUID fiscal", type: "text" },
   { name: "pdfRef", label: "PDF (referencia)", type: "text" },
   { name: "xmlRef", label: "XML (referencia)", type: "text" },
+  { name: "createdByUserId", label: "Creado por", type: "autocomplete", required: true, from: "createdByUser.id", resource: "user", displayFields: ["name", "email"], placeholder: "Buscar por nombre o correo…" },
 ];
 
 export default async function InvoicePage({
