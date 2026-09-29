@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { href: "/branch", label: "Sucursales", hint: "Tiendas físicas" },
   { href: "/case", label: "Casos", hint: "Soporte y seguimiento" },
   { href: "/chat", label: "Chat", hint: "Mockup de conversaciones (ejemplo)" },
+  { href: "/cfdi-demo", label: "Timbrar", hint: "Demo de CFDI (pruebas)" },
   { href: "/user", label: "Usuarios", hint: "Usuarios del panel" },
 ] as const;
 
