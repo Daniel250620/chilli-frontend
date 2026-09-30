@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { Selector } from "@/components/selector";
-import { cfdiStatus, listCfdiUses, stampCfdi, type Receptor, type StampResult } from "@/lib/actions/cfdi-demo";
-import { CsfDropzone } from "./csf-dropzone";
+import { cfdiStatus, extractCsf, listCfdiUses, stampCfdi, type Receptor, type StampResult } from "@/lib/actions/cfdi-demo";
+import { Dropzone } from "./dropzone";
 
 type Concepto = { descripcion: string; cantidad: number; unitario: number };
 
@@ -73,7 +73,10 @@ export function StampDemo({ receptor, conceptos }: { receptor: Receptor; concept
       <section className="elevacion rounded-2xl border-2 border-black bg-tiza p-4">
         <h2 className="text-xs font-extrabold tracking-[0.2em] text-carbon/60 uppercase">Receptor</h2>
         <div className="mt-2">
-          <CsfDropzone
+          <Dropzone
+            action={extractCsf}
+            label="Suelta aquí la Constancia de Situación Fiscal o haz clic para elegirla"
+            pendingLabel="Procesando constancia…"
             onExtracted={(d) =>
               setForm({
                 rfc: d.rfc,

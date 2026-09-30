@@ -1,11 +1,17 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { extractCsf, type CsfData } from "@/lib/actions/cfdi-demo";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 
-export function CsfDropzone({ onExtracted }: { onExtracted: (data: CsfData) => void }) {
+interface DropzoneProps<T> {
+  action: (formData: FormData) => Promise<{ data?: T; error?: string }>;
+  onExtracted: (data: T) => void;
+  label: string;
+  pendingLabel: string;
+}
+
+export function Dropzone<T>({ action, onExtracted, label, pendingLabel }: DropzoneProps<T>) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [over, setOver] = useState(false);
@@ -25,7 +31,7 @@ export function CsfDropzone({ onExtracted }: { onExtracted: (data: CsfData) => v
     const formData = new FormData();
     formData.append("file", file);
     startTransition(async () => {
-      const { data, error } = await extractCsf(formData);
+      const { data, error } = await action(formData);
       if (error) setError(error);
       else if (data) onExtracted(data);
     });
@@ -56,7 +62,7 @@ export function CsfDropzone({ onExtracted }: { onExtracted: (data: CsfData) => v
         }}
         className={`cursor-pointer rounded-xl border-2 border-dashed border-black px-4 py-5 text-center text-sm font-semibold text-carbon transition focus:ring-[3px] focus:ring-guajillo/18 focus:outline-none ${over ? "bg-mostaza-tinta" : "bg-white"} ${pending ? "cursor-not-allowed opacity-60" : ""}`}
       >
-        Suelta aquí la Constancia de Situación Fiscal o haz clic para elegirla
+        {label}
         <span className="mt-1 block text-xs font-medium text-carbon/60">PDF o imagen, hasta 10 MB</span>
         <input
           ref={inputRef}
@@ -70,7 +76,7 @@ export function CsfDropzone({ onExtracted }: { onExtracted: (data: CsfData) => v
         />
       </div>
       <p aria-live="polite" className={`mt-2 text-sm font-medium ${error ? "text-guajillo" : "text-carbon/70"}`}>
-        {pending ? "Procesando constancia…" : error}
+        {pending ? pendingLabel : error}
       </p>
     </div>
   );

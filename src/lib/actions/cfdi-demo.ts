@@ -50,6 +50,18 @@ export async function extractCsf(formData: FormData): Promise<{ data?: CsfData; 
   }
 }
 
+export async function extractTicket(formData: FormData): Promise<{ data?: { folio: string }; error?: string }> {
+  try {
+    const { data } = await httpClient.post("/ticket/extract", formData, {
+      headers: await authHeaders(),
+      timeout: 60_000,
+    });
+    return { data };
+  } catch (error) {
+    return { error: errorMessage(error, "No se pudo leer el ticket") };
+  }
+}
+
 export async function listCfdiUses(rfc: string, regimen: string): Promise<{ id: string; descripcion: string }[]> {
   try {
     const { data } = await httpClient.get("/invoice/cfdi-uses", {

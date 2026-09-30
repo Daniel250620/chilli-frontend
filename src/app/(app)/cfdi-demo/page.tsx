@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/page-header";
 import { StampDemo } from "./stamp-demo";
+import { TicketDemo } from "./ticket-demo";
 
 // Valores iniciales del formulario: Público en General, para poder timbrar sin subir nada.
 const RECEPTOR = {
@@ -23,6 +24,7 @@ export default function CfdiDemoPage() {
         description="Demo contra el ambiente de pruebas: sube la constancia del receptor o captura sus datos, elige el uso de CFDI y timbra; descarga los archivos cuando llegue el webhook."
       />
       <StampDemo receptor={RECEPTOR} conceptos={CONCEPTOS} />
+      <TicketDemo />
     </div>
   );
 }
